@@ -1,4 +1,3 @@
-from rich import print
 from rich.console import Console
 from rich.table import Table
 
@@ -66,6 +65,13 @@ class MainView:
 
         return event_menu_choice
 
+    @staticmethod
+    def input_update_view(obj, key):
+
+        new_value = input(f"{key} [{getattr(obj, key)}] : \n")
+
+        return new_value
+
 
 class CustomerMenuView:
 
@@ -78,7 +84,7 @@ class CustomerMenuView:
         console_view = ConsoleView("Customer Representatives")
         console_view.display_customer_representative_list(cr_list)
         which_one = input("Client attribué à ?\n")
-        customer_representative = cr_list[int(which_one)][3]
+        customer_representative = cr_list[int(which_one)]
 
         return {'last_name': last_name,
                 'first_name': first_name,
@@ -91,7 +97,6 @@ class CustomerMenuView:
 
         which_one = int(input("Quel client souhaitez-vous modifier ?\n"))
         customer_to_edit = customer_list[which_one]
-        print(customer_to_edit)
 
         return customer_to_edit
 
@@ -99,7 +104,7 @@ class CustomerMenuView:
 
         which_one = int(input("Quel client souhaitez-vous supprimer ?\n"))
         customer_to_delete = customer_list[which_one]
-        customer_id = customer_to_delete[8]
+        customer_id = customer_to_delete[0]
 
         return customer_id
 
@@ -112,7 +117,7 @@ class CustomerMenuView:
             5: "customer_representative",
         }
 
-        x = int(input("Vous souhaitez rechercher un évènement par :"
+        x = int(input("Vous souhaitez rechercher un client par :"
                       "\n[1] - Prénom"
                       "\n[2] - Nom"
                       "\n[3] - Entreprise"
@@ -137,26 +142,21 @@ class ContractMenuView:
         console_view = ConsoleView("Customer Representatives")
         console_view.display_customer_representative_list(cr_list)
         which_cr = int(input("Quel commercial ?\n"))
-        customer_representative_id = cr_list[which_cr][0]
-        print(customer_representative_id)
-        customer_representative_email = cr_list[which_cr][3]
+        customer_representative = cr_list[which_cr]
 
         console_view = ConsoleView("Customers")
         console_view.display_customer_list(customer_list)
 
         which_customer = int(input("Quel client ?\n"))
-        customer_email = customer_list[which_customer][7]
-        customer_id = customer_list[which_customer][8]
+        customer = customer_list[which_customer]
 
         return {
             'name': name,
             'total_amount': total_amount,
             'amount_due': amount_due,
             'status': status,
-            'customer_representative_id': customer_representative_id,
-            'customer_representative_email': customer_representative_email,
-            'customer_email': customer_email,
-            'customer_id': customer_id
+            'customer_representative': customer_representative,
+            'customer': customer
         }
 
     def edit_contract(self, contract_list):
@@ -304,9 +304,9 @@ class ConsoleView:
 
     def display_customer_list(self, customer_list):
 
-        columns = ["n°", "first_name", "last_name", "phone_number", "company_name",
-                   "date_created", "date_modified", "customer_representative",
-                   "email", "id"]
+        columns = ["n°", "id", "first_name", "last_name", "phone_number",
+                   "company_name", "date_created", "date_modified",
+                   "customer_representative_id", "email"]
 
         for column in columns:
             self.table.add_column(column)
@@ -345,10 +345,10 @@ class ConsoleView:
                 contract[1],
                 str(contract[2]),
                 str(contract[3]),
-                str(contract[4]),
+                str(contract[9]),
+                contract[4],
                 contract[5],
-                contract[6],
-                contract[9]
+                contract[8]
             )
 
         self.console.print(self.table)
