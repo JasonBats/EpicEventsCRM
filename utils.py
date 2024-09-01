@@ -7,6 +7,7 @@ def hash_password(password):
     return hashed
 
 
-def verify_password(hashed_password, user_password):
-    print(bcrypt.checkpw(user_password.encode('utf-8'), hashed_password))
-    return bcrypt.checkpw(user_password.encode('utf-8'), hashed_password)
+def verify_password(password, user_password):
+    user_password_bytes = password.encode('utf-8')
+    access = bcrypt.checkpw(user_password_bytes, user_password)
+    return access

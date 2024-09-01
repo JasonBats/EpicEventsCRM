@@ -1,11 +1,12 @@
 from datetime import date
+from uuid import UUID
 
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, clear_mappers
+from sqlalchemy.orm import clear_mappers, sessionmaker
+
 from controller import ModelsController
-from models import Base, CustomerRepresentative, Customer, Contract, Event
-from uuid import UUID
+from models import Base, Contract, Customer, CustomerRepresentative, Event
 
 
 @pytest.fixture(scope="function")
