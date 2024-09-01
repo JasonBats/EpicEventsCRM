@@ -10,8 +10,6 @@ from models import Contract, Customer, CustomerRepresentative, Event
 from utils import hash_password, verify_password
 from view import LoginView, MainView
 
-SECRET_KEY = "test"  # Remove before production
-
 
 class LoginController:
 
