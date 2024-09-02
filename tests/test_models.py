@@ -11,7 +11,7 @@ from models import Base, Contract, Customer, CustomerRepresentative, Event
 
 @pytest.fixture(scope="function")
 def session():
-    engine = create_engine('sqlite:///:memory:')
+    engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
     session = Session()
 
@@ -32,12 +32,13 @@ def models_controller(session):
 @pytest.fixture
 def customer_representative(session):
     customer_representative = CustomerRepresentative(
-        id=UUID('12345678-1234-5678-1234-567812345678'),
+        id=UUID("12345678-1234-5678-1234-567812345678"),
         first_name="RepFirstName",
         last_name="RepLastName",
         email="rep@example.com",
         phone_number="0137814598",
-        password="123456".encode("utf-8")
+        password="123456".encode("utf-8"),
+        is_admin=0,
     )
 
     session.add(customer_representative)
@@ -59,7 +60,7 @@ def customer_test(session, customer_representative):
         company_name="CompanyTest",
         date_created=now,
         date_modified=now,
-        customer_representative=customer_representative
+        customer_representative=customer_representative,
     )
 
     session.add(customer_test)
@@ -82,8 +83,8 @@ def contract_test(session, customer_representative, customer_test):
         customer_representative=customer_representative,
         customer_representative_email=customer_representative.email,
         customer=customer_test,
-        customer_email=customer_test.email
-        )
+        customer_email=customer_test.email,
+    )
 
     session.add(contract_test)
     session.commit()
@@ -93,7 +94,9 @@ def contract_test(session, customer_representative, customer_test):
 
 def test_presence_of_customer_representative(session, customer_representative):
     customer_representative_id = customer_representative.id
-    retrieved_representative = session.get(CustomerRepresentative, customer_representative_id)
+    retrieved_representative = session.get(
+        CustomerRepresentative, customer_representative_id
+    )
 
     assert retrieved_representative.first_name == "RepFirstName"
 
@@ -112,18 +115,51 @@ def test_presence_of_contract(session, contract_test):
     assert retrieved_contract.name == "TestContractName"
 
 
+def test_create_customer_representative(
+    session, customer_representative, models_controller
+):
+
+    customer_representative_infos = {
+        "email": "sales1@test.com",
+        "first_name": "new",
+        "last_name": "representative",
+        "password": "testmdp123",
+        "phone_number": 1234156789,
+    }
+
+    customer_representative_instance = models_controller.create_customer_representative(
+        customer_representative_infos
+    )
+
+    assert customer_representative_instance.first_name == "new"
+
+    saved_instance = (
+        session.query(CustomerRepresentative)
+        .filter_by(email="sales1@test.com")
+        .first()
+    )
+
+    assert saved_instance is not None
+    assert saved_instance.first_name == "new"
+    assert saved_instance.last_name == "representative"
+    assert saved_instance.email == "sales1@test.com"
+    assert saved_instance.phone_number == '1234156789'
+
+
 def test_create_customer(session, customer_representative, models_controller):
 
     customer_infos = {
-        'last_name': "CreatedLastName",
-        'first_name': "CreatedFirstName",
-        'email': "create@email.test",
-        'phone_number': "01234567",
-        'company_name': "CreatedCompanyName",
-        'customer_representative': (str(customer_representative.id),)
+        "last_name": "CreatedLastName",
+        "first_name": "CreatedFirstName",
+        "email": "create@email.test",
+        "phone_number": "01234567",
+        "company_name": "CreatedCompanyName",
+        "customer_representative": (str(customer_representative.id),),
     }
 
-    customer_instance = models_controller.create_customer(customer_infos)
+    customer_instance = models_controller.create_customer(
+        customer_infos, customer_representative
+    )
 
     customer = session.query(Customer).filter_by(email="create@email.test").one()
 
@@ -131,22 +167,43 @@ def test_create_customer(session, customer_representative, models_controller):
     assert customer.customer_representative == customer_representative
 
 
-def test_create_contract(session, customer_representative, customer_test, models_controller):
+def test_create_contract(
+    session, customer_representative, customer_test, models_controller
+):
 
-    customer_representative_attrs = (str(customer_representative.id), customer_representative.last_name, customer_representative.first_name, customer_representative.email, customer_representative.phone_number, customer_representative.password)
+    customer_representative_attrs = (
+        str(customer_representative.id),
+        customer_representative.last_name,
+        customer_representative.first_name,
+        customer_representative.email,
+        customer_representative.phone_number,
+        customer_representative.password,
+    )
 
-    customer_attrs = (str(customer_test.id), customer_test.first_name, customer_test.last_name, customer_test.phone_number, customer_test.company_name, customer_test.date_modified, customer_test.date_created, customer_test.customer_representative_id, customer_test.email)
+    customer_attrs = (
+        str(customer_test.id),
+        customer_test.first_name,
+        customer_test.last_name,
+        customer_test.phone_number,
+        customer_test.company_name,
+        customer_test.date_modified,
+        customer_test.date_created,
+        customer_test.customer_representative_id,
+        customer_test.email,
+    )
 
     contract_infos = {
-            'name': "CreatedContractName",
-            'total_amount': 1000,
-            'amount_due': 500,
-            'status': "En cours",
-            'customer_representative': customer_representative_attrs,
-            'customer': customer_attrs
-        }
+        "name": "CreatedContractName",
+        "total_amount": 1000,
+        "amount_due": 500,
+        "status": "En cours",
+        "customer_representative": customer_representative_attrs,
+        "customer": customer_attrs,
+    }
 
-    contract_instance = models_controller.create_contract(contract_infos)
+    contract_instance = models_controller.create_contract(
+        contract_infos, customer_representative
+    )
 
     contract = session.query(Contract).filter_by(name="CreatedContractName").one()
 
@@ -155,4 +212,3 @@ def test_create_contract(session, customer_representative, customer_test, models
 
 
 # def test_create_event(session, customer_representative, customer_test, contract_test, models_controller):
-

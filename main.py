@@ -1,6 +1,14 @@
+import os
+from datetime import datetime
+from dotenv import load_dotenv
+import os
+from uuid import UUID
+
+import jwt
 import sentry_sdk
 
 from controller import DataBaseController, LoginController, ModelsController
+from models import CustomerRepresentative
 from view import (
     ConsoleView,
     ContractMenuView,
@@ -10,20 +18,17 @@ from view import (
     MainView,
 )
 
+load_dotenv()
+sentry_dsn = os.getenv("SENTRY_DSN")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+
+
 sentry_sdk.init(
-    dsn="https://6db641e48c6e2039cd94eb7fc0e00d78@o4507583025446912.ingest.de."
-    "sentry.io/4507583030296656",
+    dsn=sentry_dsn,
     ignore_errors=[KeyboardInterrupt],
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
     traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
     profiles_sample_rate=1.0,
 )
-
-# sentry_test = 1 / 0
 
 
 class CustomerRepresentativeController:
@@ -170,9 +175,35 @@ class EventController:
 
 class MainController:
 
+    logged = False
+
     def __init__(self):
+        self.main_view = MainView()
         self.login_controller = LoginController()
-        self.logged, self.user = self.login_controller.login()
+        self.decoded_token = self.check_token_date()
+        if not self.decoded_token:
+            retries = 3
+            while self.logged is False and retries:
+                self.main_view.login_error(retries)
+                retries -= 1
+                self.logged, self.user = self.login_controller.login()
+        else:
+            self.logged = True
+            self.user = self.login_controller.session.query(CustomerRepresentative).filter_by(id=UUID(self.decoded_token["user_id"])).one()
+
+    def check_token_date(self):
+        if not os.path.isfile(".credentials"):
+            return False
+
+        f = open(".credentials", "r")
+        encoded_token = f.read()
+        decoded_token = jwt.decode(encoded_token, JWT_SECRET_KEY, algorithms=["HS256"])
+        if datetime.now() < datetime.strptime(decoded_token["expired_date"], "%m/%d/%Y, %H:%M:%S"):
+            return decoded_token
+        else:
+            return False
+
+
 
     def run(self):
         if self.logged:
@@ -185,9 +216,13 @@ class MainController:
                         2: create_contract_menu_handler,
                         3: create_event_menu_handler,
                         4: creatve_cr_menu_handler,
+                        5: self.logout,
                     }
 
                     main_menu_options[main_choice](self.user)
+
+                    if not self.logged:
+                        break
 
                 except ValueError as e:
                     print("Merci de saisir le CHIFFRE correspondant à votre choix.")
@@ -196,6 +231,14 @@ class MainController:
                     print(f"Ce choix ne correspond à aucune option.")
                 except IndexError:
                     print("Ce choix ne correspond à aucune option.")
+
+    def logout(self, user):
+        print("Déconnexion réussie.")
+        self.decoded_token = None
+        self.logged = False
+        user = None
+        return self.decoded_token
+
 
 
 def create_client_menu_handler(user):
@@ -249,14 +292,18 @@ def create_event_menu_handler(user):
     event_functions[event_menu](user)
 
 
-def creatve_cr_menu_handler():
+def creatve_cr_menu_handler(user):
 
-    cr_menu = MainView.customer_representative_menu()
-    cr_controller = CustomerRepresentativeController()
+    if user.is_admin == 1:
 
-    cr_functions = {1: cr_controller.create_new_customer_representative}
+        cr_menu = MainView.customer_representative_menu()
+        cr_controller = CustomerRepresentativeController()
 
-    cr_functions[cr_menu]()
+        cr_functions = {1: cr_controller.create_new_customer_representative}
+
+        cr_functions[cr_menu]()
+    else:
+        print("Vous devez être administrateur pour accéder à ce menu")
 
 
 main_controller = MainController()

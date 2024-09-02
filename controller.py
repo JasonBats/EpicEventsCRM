@@ -1,8 +1,11 @@
 import datetime
+import os
+from time import strftime
 from uuid import UUID
 
+from dotenv import load_dotenv
 from sqlalchemy import MetaData, Table, create_engine
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import operators
 
@@ -10,21 +13,34 @@ from models import Contract, Customer, CustomerRepresentative, Event
 from utils import hash_password, verify_password
 from view import LoginView, MainView
 
+import jwt
+
+load_dotenv()
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+
 
 class LoginController:
 
     def __init__(self):
-        self.engine = create_engine("sqlite:///mydb.db", echo=True)
+        self.engine = create_engine("sqlite:///mydb.db")
         self.Session = sessionmaker(bind=self.engine)
         self.metadata = MetaData()
         self.session = self.Session()
 
     def login(self):
-
         login_view = LoginView()
         email, password = login_view.get_credentials()
-        user = self.session.query(CustomerRepresentative).filter_by(email=email).one()
-        password_verified = verify_password(password, user.password)
+        try:
+            user = self.session.query(CustomerRepresentative).filter_by(email=email).one()
+            password_verified = verify_password(password, user.password)
+            expired_date = datetime.datetime.today() + datetime.timedelta(minutes=1)
+            encoded_jwt = jwt.encode({"user_id": str(user.id), "expired_date": expired_date.strftime("%m/%d/%Y, %H:%M:%S")}, JWT_SECRET_KEY, algorithm="HS256")
+            f = open(".credentials", "w+")
+            f.write(encoded_jwt)
+            f.close()
+        except NoResultFound:
+            user = None
+            password_verified = False
 
         return password_verified, user
 
@@ -32,7 +48,7 @@ class LoginController:
 class DataBaseController:
 
     def __init__(self):
-        self.engine = create_engine("sqlite:///mydb.db", echo=True)
+        self.engine = create_engine("sqlite:///mydb.db")
         self.Session = sessionmaker(bind=self.engine)
         self.metadata = MetaData()
         self.session = self.Session()
@@ -161,9 +177,10 @@ class ModelsController:
             email=customer_representative_infos["email"],
             phone_number=customer_representative_infos["phone_number"],
             password=hashed_password,
+            is_admin=0,
         )
 
-        self.database_controller.session.add(customer_representative)
+        self.session.add(customer_representative)
         self.session.commit()
 
         return customer_representative
@@ -193,8 +210,6 @@ class ModelsController:
 
     def create_contract(self, contract_infos, user):
 
-        print(contract_infos)
-
         now = datetime.date.today()
 
         customer_representative_object = self.session.get(
@@ -204,8 +219,6 @@ class ModelsController:
         customer = contract_infos["customer"]
         customer_id = UUID(customer[0])
         customer_object = self.session.get(Customer, customer_id)
-
-        print(f"!!! ICI !!! {customer}")
 
         contract = Contract(
             name=contract_infos["name"],

@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid1
 
-from sqlalchemy import Date, ForeignKey, Integer, LargeBinary, Numeric, String
+from sqlalchemy import Date, ForeignKey, Integer, LargeBinary, Numeric, String, Boolean
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 
 
@@ -33,6 +33,7 @@ class CustomerRepresentative(Base):
         back_populates="customer_representative",
         foreign_keys="[Event.customer_representative_id]",
     )
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
 
 class Customer(Base):

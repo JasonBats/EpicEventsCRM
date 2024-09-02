@@ -1,14 +1,20 @@
 from rich.console import Console
 from rich.table import Table
 
+from utils import validate_email, validate_phone_number, validate_total_amount, validate_amount_due, validate_date, \
+    validate_end_date
+
 
 class LoginView:
     def get_credentials(self):
-        # user = input("Login :")
-        # password = input("Password :")
+        user = input("Login :")
+        password = input("Password :")
 
-        user = "email@test.com"
-        password = "Password123"  # TODO : Supprimer pour vrai login
+        # user = "email@test.com"
+        # password = "Passwreerord123"  # TODO : Supprimer pour vrai login
+
+        # user = "admin"
+        # password = "admin"
 
         return user, password
 
@@ -19,10 +25,12 @@ class MainView:
     def main_menu():
         main_choice = int(
             input(
-                "Quel menu ouvrir ?"
+                "Quel menu ouvrir ?\n"
                 "\n[1] - Clients"
                 "\n[2] - Contrats"
                 "\n[3] - Évenements\n"
+                "\n[4] - Administration\n"
+                "\n[5] - Déconnexion\n"
             )
         )
 
@@ -99,6 +107,9 @@ class MainView:
 
         return new_value
 
+    def login_error(self, retries):
+        print(f"Entrez vos identifiants. [{retries}] essais restants.")
+
 
 class CustomerRepresentativeMenuView:
 
@@ -106,14 +117,18 @@ class CustomerRepresentativeMenuView:
         last_name = input("Nom ?\n")
         first_name = input("Prenom ?\n")
         email = input("Email ?\n")
-        phone_number = int(input("Numéro de téléphone ?\n"))
+        while not validate_email(email):
+            email = input("Veuillez saisir un email valide")
+        phone_number = input("Numéro de téléphone ?\n")
+        while not validate_phone_number(phone_number):
+            phone_number = input("Veuillez saisir un NUMERO de téléphone")
         password = input("Mot de passe commercial ?")
 
         return {
             "last_name": last_name,
             "first_name": first_name,
             "email": email,
-            "phone_number": phone_number,
+            "phone_number": int(phone_number),
             "password": password,
         }
 
@@ -124,14 +139,18 @@ class CustomerMenuView:
         last_name = input("Nom du client ?\n")
         first_name = input("Prenom du client ?\n")
         email = input("Email du client ?\n")
-        phone_number = int(input("Numéro de téléphone du client ?\n"))
+        while not validate_email(email):
+            email = input("Veuillez saisir un email valide")
+        phone_number = input("Numéro de téléphone du client ?\n")
+        while not validate_phone_number(phone_number):
+            phone_number = input("Veuillez saisir un NUMERO de téléphone")
         company_name = input("Entreprise du client ?\n")
 
         return {
             "last_name": last_name,
             "first_name": first_name,
             "email": email,
-            "phone_number": phone_number,
+            "phone_number": int(phone_number),
             "company_name": company_name,
         }
 
@@ -179,8 +198,14 @@ class ContractMenuView:
 
     def create_contract(self, customer_list):
         name = input("Nom du contrat ?\n")
-        total_amount = float(input("Montant du contrat ?\n"))
-        amount_due = float(input("Reste à payer ?\n"))
+        total_amount = input("Montant du contrat ?\n")
+        while not validate_total_amount(total_amount):
+            total_amount = input("Saisissez en CHIFFRES le montant du contrat ?\n")
+        amount_due = input("Reste à payer ?\n")
+        while not validate_amount_due(total_amount, amount_due):
+            amount_due = input("Saisissez en CHIFFRES le montant restant à payer"
+                               "Le montant restant ne peut pas être superieur au"
+                               "montant total")
         status = input("Statut ?\n")
 
         console_view = ConsoleView("Customers")
@@ -191,8 +216,8 @@ class ContractMenuView:
 
         return {
             "name": name,
-            "total_amount": total_amount,
-            "amount_due": amount_due,
+            "total_amount": int(total_amount),
+            "amount_due": int(amount_due),
             "status": status,
             "customer": customer,
         }
@@ -249,9 +274,17 @@ class EventMenuView:
 
         name = input("Quel est le nom de l'évènement ?\n")
         event_date_start = input("Quand commence l'évènement ? [AAAA-MM-JJ]\n")
+        while not validate_date(event_date_start):
+            print("La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23)")
+            event_date_start = input("Quand commence l'évènement ? [AAAA-MM-JJ]\n")
         event_date_end = input("Et quand se termine-t-il ? [AAAA-MM-JJ]\n")
+        while not validate_end_date(event_date_start, event_date_end):
+            print("La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23). De plus, l'évenement ne pe pas se terminer avant d'avoir commencer.")
+            event_date_end = input("Et quand se termine-t-il ? [AAAA-MM-JJ]\n")
         location = input("A quel endroit se tient cet évènement ?\n")
-        attendees = int(input("Combien de personnes sont conviées à cet évènement ?\n"))
+        attendees = input("Combien de personnes sont conviées à cet évènement ?\n")
+        while not attendees.isnumeric():
+            attendees = input("Combien de personnes sont conviées à cet évènement ?\n")
         notes = input("Notes :\n")
 
         event_infos = {
@@ -259,7 +292,7 @@ class EventMenuView:
             "event_date_start": event_date_start,
             "event_date_end": event_date_end,
             "location": location,
-            "attendees": attendees,
+            "attendees": int(attendees),
             "notes": notes,
         }
 
