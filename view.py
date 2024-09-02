@@ -1,8 +1,9 @@
 from rich.console import Console
 from rich.table import Table
 
-from utils import validate_email, validate_phone_number, validate_total_amount, validate_amount_due, validate_date, \
-    validate_end_date
+from utils import (validate_amount_due, validate_date, validate_email,
+                   validate_end_date, validate_phone_number,
+                   validate_total_amount)
 
 
 class LoginView:
@@ -11,7 +12,7 @@ class LoginView:
         password = input("Password :")
 
         # user = "email@test.com"
-        # password = "Passwreerord123"  # TODO : Supprimer pour vrai login
+        # password = "Password123"  # TODO : Supprimer pour vrai login
 
         # user = "admin"
         # password = "admin"
@@ -203,9 +204,11 @@ class ContractMenuView:
             total_amount = input("Saisissez en CHIFFRES le montant du contrat ?\n")
         amount_due = input("Reste à payer ?\n")
         while not validate_amount_due(total_amount, amount_due):
-            amount_due = input("Saisissez en CHIFFRES le montant restant à payer"
-                               "Le montant restant ne peut pas être superieur au"
-                               "montant total")
+            amount_due = input(
+                "Saisissez en CHIFFRES le montant restant à payer"
+                "Le montant restant ne peut pas être superieur au"
+                "montant total"
+            )
         status = input("Statut ?\n")
 
         console_view = ConsoleView("Customers")
@@ -275,11 +278,15 @@ class EventMenuView:
         name = input("Quel est le nom de l'évènement ?\n")
         event_date_start = input("Quand commence l'évènement ? [AAAA-MM-JJ]\n")
         while not validate_date(event_date_start):
-            print("La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23)")
+            print(
+                "La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23)"
+            )
             event_date_start = input("Quand commence l'évènement ? [AAAA-MM-JJ]\n")
         event_date_end = input("Et quand se termine-t-il ? [AAAA-MM-JJ]\n")
         while not validate_end_date(event_date_start, event_date_end):
-            print("La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23). De plus, l'évenement ne pe pas se terminer avant d'avoir commencer.")
+            print(
+                "La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23). De plus, l'évenement ne pe pas se terminer avant d'avoir commencer."
+            )
             event_date_end = input("Et quand se termine-t-il ? [AAAA-MM-JJ]\n")
         location = input("A quel endroit se tient cet évènement ?\n")
         attendees = input("Combien de personnes sont conviées à cet évènement ?\n")

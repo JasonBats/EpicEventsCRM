@@ -1,22 +1,15 @@
 import os
 from datetime import datetime
-from dotenv import load_dotenv
-import os
 from uuid import UUID
 
 import jwt
 import sentry_sdk
+from dotenv import load_dotenv
 
 from controller import DataBaseController, LoginController, ModelsController
 from models import CustomerRepresentative
-from view import (
-    ConsoleView,
-    ContractMenuView,
-    CustomerMenuView,
-    CustomerRepresentativeMenuView,
-    EventMenuView,
-    MainView,
-)
+from view import (ConsoleView, ContractMenuView, CustomerMenuView,
+                  CustomerRepresentativeMenuView, EventMenuView, MainView)
 
 load_dotenv()
 sentry_dsn = os.getenv("SENTRY_DSN")
@@ -189,7 +182,10 @@ class MainController:
                 self.logged, self.user = self.login_controller.login()
         else:
             self.logged = True
-            self.user = self.login_controller.session.query(CustomerRepresentative).filter_by(id=UUID(self.decoded_token["user_id"])).one()
+            self.user = (
+                self.login_controller.session.query(CustomerRepresentative)
+                .filter_by(id=UUID(self.decoded_token["user_id"])).one()
+            )
 
     def check_token_date(self):
         if not os.path.isfile(".credentials"):
@@ -198,12 +194,12 @@ class MainController:
         f = open(".credentials", "r")
         encoded_token = f.read()
         decoded_token = jwt.decode(encoded_token, JWT_SECRET_KEY, algorithms=["HS256"])
-        if datetime.now() < datetime.strptime(decoded_token["expired_date"], "%m/%d/%Y, %H:%M:%S"):
+        if datetime.now() < datetime.strptime(
+            decoded_token["expired_date"], "%m/%d/%Y, %H:%M:%S"
+        ):
             return decoded_token
         else:
             return False
-
-
 
     def run(self):
         if self.logged:
@@ -238,7 +234,6 @@ class MainController:
         self.logged = False
         user = None
         return self.decoded_token
-
 
 
 def create_client_menu_handler(user):

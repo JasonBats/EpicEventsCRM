@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import clear_mappers, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from controller import ModelsController
 from models import Base, Contract, Customer, CustomerRepresentative, Event
@@ -134,16 +134,14 @@ def test_create_customer_representative(
     assert customer_representative_instance.first_name == "new"
 
     saved_instance = (
-        session.query(CustomerRepresentative)
-        .filter_by(email="sales1@test.com")
-        .first()
+        session.query(CustomerRepresentative).filter_by(email="sales1@test.com").first()
     )
 
     assert saved_instance is not None
     assert saved_instance.first_name == "new"
     assert saved_instance.last_name == "representative"
     assert saved_instance.email == "sales1@test.com"
-    assert saved_instance.phone_number == '1234156789'
+    assert saved_instance.phone_number == "1234156789"
 
 
 def test_create_customer(session, customer_representative, models_controller):
