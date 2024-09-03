@@ -1,0 +1,4 @@
+[run]
+omit =
+    view.py
+    __init__.py

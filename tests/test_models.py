@@ -1,4 +1,4 @@
-from models import CustomerRepresentative, Customer, Contract, Event
+from models import Contract, Customer, CustomerRepresentative, Event
 
 
 class TestCustomerRepresentativeModel:

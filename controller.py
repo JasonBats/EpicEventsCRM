@@ -428,7 +428,6 @@ class ModelsController:
             "first_name": customer_to_edit[2],
             "phone_number": customer_to_edit[3],
             "company_name": customer_to_edit[4],
-            # 'customer_representative': customer_to_edit[7],
             "email": customer_to_edit[8],
         }
 
@@ -447,6 +446,8 @@ class ModelsController:
         customer.date_modified = datetime.datetime.today()
 
         self.session.commit()
+
+        return customer
 
     def edit_contract_object(self, contract_to_edit):
         """
@@ -478,6 +479,8 @@ class ModelsController:
                 setattr(contract, key, new_value)
 
         self.session.commit()
+
+        return contract
 
     def edit_event_object(self, event_to_edit):
         """
