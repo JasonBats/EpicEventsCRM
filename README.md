@@ -22,8 +22,11 @@ Administrator account can be logged using these credentials :
 
 ## Run tests
 
- 1. Run tests : `pytest`
- 2. Run tests with coverage report : `pytest --cov`
+Tests settings already specified in `.coveragerc` file.
+ 1. Run tests : `coverage run -m pytest`
+ 2. Generate coverage report : `coverage html`
+
+`"htmlcov"` folder will be found at the project's root folder. Please find `"index.html"` containing the report.
 
 
 ## Database Diagram :
