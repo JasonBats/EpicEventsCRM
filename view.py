@@ -11,12 +11,6 @@ class LoginView:
         user = input("Login :")
         password = input("Password :")
 
-        # user = "email@test.com"
-        # password = "Password123"  # TODO : Supprimer pour vrai login
-
-        # user = "admin"
-        # password = "admin"
-
         return user, password
 
 

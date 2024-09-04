@@ -4,9 +4,22 @@ from view import (
     CustomerRepresentativeMenuView,
     CustomerMenuView,
     ContractMenuView,
-    EventMenuView,
+    EventMenuView, ConsoleView, LoginView,
 )
 
+
+class TestLoginView:
+
+    def test_get_credentials(self, mocker):
+        view = LoginView()
+
+        mocker.patch("builtins.input",
+                     side_effect=["login", "password"])
+
+        user, password = view.get_credentials()
+
+        assert user == "login"
+        assert password == "password"
 
 class TestCustomerRepresentativeMenuView:
 
@@ -94,7 +107,6 @@ class TestContractMenuView:
         )
 
         details = view.create_contract(customer_list)
-        print(f"&&&&&&&&&&&{details}")
 
         assert details["name"] == "ContractName"
         assert details["total_amount"] == 750
@@ -145,17 +157,69 @@ class TestEventMenuView:
         )
 
         contract, details = view.create_event(contract_list)
-        print(f"qserzgsedrfg{details}")
-        print(f"uhidgdiufrothgderx{contract_list[0]}")
 
         assert details["name"] == "EventName"
         assert details["location"] == "EventLocation"
 
     def test_event_dynamic_search_menu(self, mocker):
-        view = ContractMenuView()
+        view = EventMenuView()
 
         mocker.patch("builtins.input", side_effect=["1", "EventNameResearch"])
 
-        details = view.contract_dynamic_search_menu()
+        details = view.event_dynamic_search_menu()
 
         assert details == ("name", "EventNameResearch")
+
+class TestConsoleView:
+
+    def test_display_event_list(self, capsys, new_event):
+        view = ConsoleView("Event List")
+
+        event_list = [
+            (
+                new_event.name,
+                str(new_event.id),
+                str(new_event.customer_id),
+                new_event.customer_email,
+                str(new_event.customer_representative_id),
+                new_event.customer_representative_email,
+                new_event.event_date_start,
+                new_event.event_date_end,
+                new_event.location,
+                new_event.attendees,
+                new_event.notes,
+                str(new_event.contract_id)
+            )
+        ]
+
+        view.display_event_list(event_list)
+        captured = capsys.readouterr()
+
+        assert new_event.name in captured.out
+        assert new_event.customer_email in captured.out
+        assert str(new_event.event_date_start) in captured.out
+
+    def test_display_customer_representative_list(self, capsys, new_customer_representative):
+        view = ConsoleView("Customer Representatives")
+
+        cr_list = [
+            (
+                str(new_customer_representative.id),
+                new_customer_representative.last_name,
+                new_customer_representative.first_name,
+                new_customer_representative.email,
+                new_customer_representative.phone_number,
+                new_customer_representative.password,
+                new_customer_representative.is_admin,
+            )
+        ]
+
+        view.display_customer_representative_list(cr_list)
+        captured = capsys.readouterr()
+
+        assert new_customer_representative.last_name in captured.out
+        assert new_customer_representative.email in captured.out
+        assert new_customer_representative.phone_number in captured.out
+
+
+
