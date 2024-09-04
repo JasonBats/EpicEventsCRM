@@ -24,3 +24,8 @@ Administrator account can be logged using these credentials :
 
  1. Run tests : `pytest`
  2. Run tests with coverage report : `pytest --cov`
+
+
+## Database Diagram :
+[![img.png](files/img.png)](https://jasonbats.github.io/EpicEventsCRM/)
+
