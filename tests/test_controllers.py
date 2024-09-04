@@ -1,7 +1,9 @@
+import uuid
+from datetime import datetime
 from unittest.mock import patch
 
 from controller import DataBaseController, LoginController, ModelsController
-from models import Contract, Customer, CustomerRepresentative
+from models import Contract, Customer, CustomerRepresentative, Event
 
 
 class TestLoginController:
@@ -19,10 +21,6 @@ class TestLoginController:
 
         mock_verify_password = mocker.patch("controller.verify_password")
         mock_verify_password.return_value = True
-
-        fake_encoded_jwt = "fake_jwt_token"
-        mock_jwt_encode = mocker.patch("controller.jwt.encode")
-        mock_jwt_encode.return_value = fake_encoded_jwt
 
         session.add(new_customer_representative)
         session.commit()
@@ -45,10 +43,6 @@ class TestLoginController:
 
         mock_verify_password = mocker.patch("controller.verify_password")
         mock_verify_password.return_value = True
-
-        fake_encoded_jwt = "fake_jwt_token"
-        mock_jwt_encode = mocker.patch("controller.jwt.encode")
-        mock_jwt_encode.return_value = fake_encoded_jwt
 
         session.add(new_customer_representative)
         session.commit()
@@ -90,6 +84,13 @@ class TestDataBaseController:
         deleted_item = controller.delete_item("event", str(new_event.id))
         assert deleted_item is None
 
+    def test_delete_unknown_item(self, session, new_event):
+        controller = DataBaseController()
+        controller.session = session
+
+        deleted_item = controller.delete_item("event", str(uuid.uuid1()))
+        assert deleted_item is None
+
     def test_list_item(self, session, new_customer_representative, new_customer):
         controller = DataBaseController()
         controller.session = session
@@ -98,6 +99,17 @@ class TestDataBaseController:
 
         assert item_list is not None
         assert item_list[0].email == new_customer.email
+
+    def test_list_customer_representatives(self, session, new_customer_representative):
+        controller = DataBaseController()
+        controller.session = session
+
+        item_list = controller.list_item(
+            "customer_representative", new_customer_representative
+        )
+
+        assert item_list is not None
+        assert item_list[0].email == new_customer_representative.email
 
     def test_filter_unpaid_contracts(
         self, session, new_customer_representative, new_contract
@@ -217,7 +229,7 @@ class TestModelsController:
             assert isinstance(created_contract, Contract)
             mock_commit.assert_called_once()
 
-    def test_edit_ontract(self, mocker, session, new_contract):
+    def test_edit_contract(self, mocker, session, new_contract):
         controller = ModelsController()
         controller.session = session
 
@@ -246,3 +258,63 @@ class TestModelsController:
 
         contract = controller.edit_contract_object(contract_to_edit)
         assert contract.name == "NewContractName"
+
+    def test_create_event(self, session, new_contract):
+        controller = ModelsController()
+        controller.session = session
+
+        event_infos = {
+            "name": "EventName",
+            "event_date_start": "2024-10-10",
+            "event_date_end": "2024-10-10",
+            "location": "EventLocation",
+            "attendees": "42",
+            "notes": "",
+        }
+
+        with patch.object(session, "add") as mock_add, patch.object(
+            session, "commit"
+        ) as mock_commit:
+            event = controller.create_event(event_infos, new_contract)
+
+            mock_add.assert_called_once()
+            assert isinstance(event, Event)
+            mock_commit.assert_called_once()
+
+    def test_edit_event(self, mocker, session, new_event):
+        controller = ModelsController()
+        controller.session = session
+
+        event_to_edit = (
+            new_event.name,
+            str(new_event.id),
+            new_event.customer_id,
+            new_event.customer_email,
+            new_event.customer_representative_id,
+            new_event.customer_representative_email,
+            new_event.event_date_start,
+            new_event.event_date_end,
+            new_event.location,
+            new_event.attendees,
+            new_event.notes,
+            new_event.contract_id,
+        )
+
+        mock_input_update_view = mocker.patch(
+            "controller.MainView.input_update_view",
+            side_effect=lambda event, field: {
+                "name": "NewEventName",
+                "event_date_start": datetime.strptime("2024-11-11", "%Y-%m-%d"),
+                "event_date_end": datetime.strptime("2024-11-11", "%Y-%m-%d"),
+                "location": "Annecy",
+                "attendees": "24",
+                "notes": "Notes",
+            }.get(field),
+        )
+
+        event = controller.edit_event_object(event_to_edit)
+
+        mock_input_update_view.assert_called()
+        assert event.name == "NewEventName"
+        assert event.attendees == 24
+        assert event.notes == "Notes"

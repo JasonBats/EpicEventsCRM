@@ -375,9 +375,9 @@ class ModelsController:
         :return: Event: The newly created Event's instance.
         """
 
-        customer_id = UUID(contract.customer_id)
-        customer_representative_id = UUID(contract.customer_representative_id)
-        contract_id = UUID(contract.id)
+        customer_id = contract.customer_id
+        customer_representative_id = contract.customer_representative_id
+        contract_id = contract.id
 
         customer = self.session.query(Customer).filter_by(id=customer_id).one()
         customer_representative = (
@@ -513,3 +513,5 @@ class ModelsController:
                 setattr(event, key, new_value)
 
         self.session.commit()
+
+        return event
