@@ -158,7 +158,6 @@ class TestConsoleView:
         assert new_event.name in captured.out
         assert new_event.customer_email in captured.out
 
-
     def test_display_customer_representative_list(self,
                                                   capsys,
                                                   new_customer_representative):

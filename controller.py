@@ -74,7 +74,9 @@ class DataBaseController:
         :param item_id
         """
         try:
-            item = self.session.execute(select(table).where(table.id == item_id)).scalars().one_or_none()
+            item = self.session.execute(
+                select(table).where(table.id == item_id)
+            ).scalars().one_or_none()
             if item is None:
                 raise ValueError(
                     f"L'objet avec l'ID {item_id} n'existe pas dans la table {table}."
@@ -358,7 +360,9 @@ class ModelsController:
             .filter_by(id=customer_representative_id)
             .one()
         )
-        result = self.session.execute(select(Contract).where(Contract.id == contract_id))
+        result = self.session.execute(select(Contract).where(
+            Contract.id == contract_id)
+        )
         contract_instance = result.scalar_one_or_none()
 
         event_date_start = datetime.datetime.strptime(

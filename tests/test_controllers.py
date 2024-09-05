@@ -199,7 +199,9 @@ class TestModelsController:
         assert customer.last_name == "NewName"
         mock_input_update_view.assert_called()
 
-    def test_create_contract(self, mocker, session, new_customer_representative, new_customer):
+    def test_create_contract(
+        self, mocker, session, new_customer_representative, new_customer
+    ):
         controller = ModelsController()
         controller.session = session
 
