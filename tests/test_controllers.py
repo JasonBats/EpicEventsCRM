@@ -206,6 +206,7 @@ class TestModelsController:
 
         customer = controller.edit_customer(customer_to_edit)
         assert customer.last_name == "NewName"
+        mock_input_update_view.assert_called()
 
     def test_create_contract(self, session, new_customer_representative, new_customer):
         controller = ModelsController()
@@ -258,6 +259,7 @@ class TestModelsController:
 
         contract = controller.edit_contract_object(contract_to_edit)
         assert contract.name == "NewContractName"
+        mock_input_update_view.assert_called()
 
     def test_create_event(self, session, new_contract):
         controller = ModelsController()

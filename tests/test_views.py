@@ -21,6 +21,7 @@ class TestLoginView:
         assert user == "login"
         assert password == "password"
 
+
 class TestCustomerRepresentativeMenuView:
 
     def test_create_customer_representative(self, mocker):
@@ -170,6 +171,7 @@ class TestEventMenuView:
 
         assert details == ("name", "EventNameResearch")
 
+
 class TestConsoleView:
 
     def test_display_event_list(self, capsys, new_event):
@@ -199,7 +201,9 @@ class TestConsoleView:
         assert new_event.customer_email in captured.out
         assert str(new_event.event_date_start) in captured.out
 
-    def test_display_customer_representative_list(self, capsys, new_customer_representative):
+    def test_display_customer_representative_list(self,
+                                                  capsys,
+                                                  new_customer_representative):
         view = ConsoleView("Customer Representatives")
 
         cr_list = [
@@ -220,6 +224,3 @@ class TestConsoleView:
         assert new_customer_representative.last_name in captured.out
         assert new_customer_representative.email in captured.out
         assert new_customer_representative.phone_number in captured.out
-
-
-

@@ -268,7 +268,8 @@ class ModelsController:
         `CustomerRepresentative` class with the provided details. The new instance
         is added to the session and committed to the database.
         :param customer_representative_infos:
-        :return: CustomerRepresentative: The newly created CustomerRepresentative's instance
+        :return: CustomerRepresentative: The newly created
+        CustomerRepresentative's instance
         """
 
         hashed_password = hash_password(customer_representative_infos["password"])

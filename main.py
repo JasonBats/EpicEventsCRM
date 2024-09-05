@@ -224,7 +224,7 @@ class MainController:
                     print("Merci de saisir le CHIFFRE correspondant à votre choix.")
                     print(e)
                 except KeyError:
-                    print(f"Ce choix ne correspond à aucune option.")
+                    print("Ce choix ne correspond à aucune option.")
                 except IndexError:
                     print("Ce choix ne correspond à aucune option.")
 
@@ -232,7 +232,6 @@ class MainController:
         print("Déconnexion réussie.")
         self.decoded_token = None
         self.logged = False
-        user = None
         return self.decoded_token
 
 

@@ -15,6 +15,7 @@ def engine():
     Base.metadata.create_all(engine)
     return engine
 
+
 @pytest.fixture
 def session(engine):
     session = Session(engine)
@@ -22,6 +23,7 @@ def session(engine):
         yield session
     finally:
         session.close()
+
 
 @pytest.fixture
 def new_customer_representative(session):
@@ -40,6 +42,7 @@ def new_customer_representative(session):
     session.refresh(customer_representative)
 
     return customer_representative
+
 
 @pytest.fixture
 def new_customer(session, new_customer_representative):
@@ -62,6 +65,7 @@ def new_customer(session, new_customer_representative):
 
     return customer
 
+
 @pytest.fixture
 def new_contract(session, new_customer_representative, new_customer):
     now = date.today()
@@ -83,6 +87,7 @@ def new_contract(session, new_customer_representative, new_customer):
     session.refresh(contract)
 
     return contract
+
 
 @pytest.fixture
 def new_event(session, new_contract):

@@ -273,13 +273,16 @@ class EventMenuView:
         event_date_start = input("Quand commence l'évènement ? [AAAA-MM-JJ]\n")
         while not validate_date(event_date_start):
             print(
-                "La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23)"
+                "La date saisie est invalide."
+                " Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23)"
             )
             event_date_start = input("Quand commence l'évènement ? [AAAA-MM-JJ]\n")
         event_date_end = input("Et quand se termine-t-il ? [AAAA-MM-JJ]\n")
         while not validate_end_date(event_date_start, event_date_end):
             print(
-                "La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ (Exemple: 2024-08-23). De plus, l'évenement ne pe pas se terminer avant d'avoir commencer."
+                "La date saisie est invalide. Veuillez rééssayer au format AAAA-MM-JJ"
+                " (Exemple: 2024-08-23). De plus, l'évenement ne pe pas se"
+                " terminer avant d'avoir commencer."
             )
             event_date_end = input("Et quand se termine-t-il ? [AAAA-MM-JJ]\n")
         location = input("A quel endroit se tient cet évènement ?\n")
