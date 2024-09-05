@@ -160,7 +160,7 @@ class CustomerMenuView:
 
         which_one = int(input("Quel client souhaitez-vous supprimer ?\n"))
         customer_to_delete = customer_list[which_one]
-        customer_id = customer_to_delete[0]
+        customer_id = customer_to_delete.id
 
         return customer_id
 
@@ -233,7 +233,7 @@ class ContractMenuView:
 
         which_one = int(input("Quel contrat souhaitez-vous supprimer ?\n"))
         contract_to_delete = contract_list[which_one]
-        contract_id = contract_to_delete[0]
+        contract_id = contract_to_delete.id
 
         return contract_id
 
@@ -263,6 +263,7 @@ class ContractMenuView:
 class EventMenuView:
 
     def create_event(self, contract_list):
+        print(f"Contract list 6874684: {contract_list}")
         console_view = ConsoleView("Contracts")
         console_view.display_contract_list(contract_list)
 
@@ -318,7 +319,7 @@ class EventMenuView:
 
         which_one = int(input("Quel évènement souhaitez-vous supprimer ?\n"))
         event_to_delete = event_list[which_one]
-        event_id = event_to_delete[1]
+        event_id = event_to_delete.id
 
         return event_id
 
@@ -362,26 +363,15 @@ class ConsoleView:
             "notes",
             "customer_email",
             "customer_representative_email",
-            "dates",
-            "contract",
+            "contract_id",
+            "event_date_start",
+            "event_date_end",
         ]
 
         for column in columns:
             self.table.add_column(column)
 
-        for i, event in enumerate(event_list):
-            self.table.add_row(
-                str(i),
-                str(event[1]),
-                event[0],
-                event[8],
-                str(event[9]),
-                event[10],
-                event[3],
-                event[5],
-                f"{event[6]} -> {event[7]}",
-                event[11],
-            )
+        self.prepare_rows_for_table(event_list, columns)
 
         self.console.print(self.table)
 
@@ -403,8 +393,7 @@ class ConsoleView:
         for column in columns:
             self.table.add_column(column)
 
-        for i, customer in enumerate(customer_list):
-            self.table.add_row(str(i), *[str(item) for item in customer])
+        self.prepare_rows_for_table(customer_list, columns)
 
         self.console.print(self.table)
 
@@ -415,8 +404,7 @@ class ConsoleView:
         for column in columns:
             self.table.add_column(column)
 
-        for i, customer in enumerate(cr_list):
-            self.table.add_row(str(i), *[str(item) for item in customer])
+        self.prepare_rows_for_table(cr_list, columns)
 
         self.console.print(self.table)
 
@@ -437,17 +425,15 @@ class ConsoleView:
         for column in columns:
             self.table.add_column(column)
 
-        for i, contract in enumerate(contract_list):
-            self.table.add_row(
-                str(i),
-                contract[0],
-                contract[1],
-                str(contract[2]),
-                str(contract[3]),
-                str(contract[9]),
-                contract[4],
-                contract[5],
-                contract[8],
-            )
+        self.prepare_rows_for_table(contract_list, columns)
 
         self.console.print(self.table)
+
+    def prepare_rows_for_table(self, item_list, columns):
+        for i, item in enumerate(item_list):
+            row = [str(i)]
+            row.extend(
+                [str(getattr(item, column))
+                 for column in columns[1:]]
+            )
+            self.table.add_row(*row)

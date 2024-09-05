@@ -1,20 +1,17 @@
 import datetime
-import os
-from uuid import UUID
+from typing import Type, Tuple, Optional
 
-import jwt
 from dotenv import load_dotenv
-from sqlalchemy import MetaData, Table, create_engine
+from sqlalchemy import MetaData, Table, create_engine, select
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import operators
 
 from models import Contract, Customer, CustomerRepresentative, Event
-from utils import hash_password, verify_password
+from utils import hash_password, verify_password, save_token_in_file
 from view import LoginView, MainView
 
 load_dotenv()
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 
 class LoginController:
@@ -25,7 +22,7 @@ class LoginController:
         self.metadata = MetaData()
         self.session = self.Session()
 
-    def login(self):
+    def login(self) -> Tuple[bool, Optional[Type[CustomerRepresentative]]]:  # TODO : Généraliser ça
         """
         Authenticates a user by verifying their email and password, and
         generates a JWT token for session management.
@@ -42,22 +39,10 @@ class LoginController:
         login_view = LoginView()
         email, password = login_view.get_credentials()
         try:
-            user = (
-                self.session.query(CustomerRepresentative).filter_by(email=email).one()
-            )
+            user = self.session.query(CustomerRepresentative).filter_by(
+                email=email).one()
             password_verified = verify_password(password, user.password)
-            expired_date = datetime.datetime.today() + datetime.timedelta(minutes=1)
-            encoded_jwt = jwt.encode(
-                {
-                    "user_id": str(user.id),
-                    "expired_date": expired_date.strftime("%m/%d/%Y, %H:%M:%S"),
-                },
-                JWT_SECRET_KEY,
-                algorithm="HS256",
-            )
-            f = open(".credentials", "w+")
-            f.write(encoded_jwt)
-            f.close()
+            save_token_in_file(user)
         except NoResultFound:
             user = None
             password_verified = False
@@ -88,20 +73,14 @@ class DataBaseController:
         :param table
         :param item_id
         """
-
-        object_id = UUID(item_id)
-
         try:
-            table_class = self._get_table_class(table)
-            item = self.session.query(table_class).get(object_id)
-
+            item = self.session.execute(select(table).where(table.id == item_id)).scalars().one_or_none()
             if item is None:
                 raise ValueError(
-                    f"L'objet avec l'ID {object_id} n'existe pas dans la table {table}."
+                    f"L'objet avec l'ID {item_id} n'existe pas dans la table {table}."
                 )
 
             self.session.delete(item)
-
             self.session.commit()
 
         except IntegrityError as error:
@@ -147,19 +126,17 @@ class DataBaseController:
         """
 
         try:
-            table = Table(table_name, self.metadata, autoload_with=self.engine)
-
             if user.is_admin:
-                query = self.session.query(table)
+                query = select(table_name)
             else:
-                if table_name == "customer_representative":
-                    query = self.session.query(table).filter(table.c.id == user.id)
+                if table_name == CustomerRepresentative:
+                    query = select(table_name).where(id == user.id)
                 else:
-                    query = self.session.query(table).filter(
-                        table.c.customer_representative_id == user.id
+                    query = select(table_name).filter(
+                        table_name.customer_representative_id == user.id
                     )
 
-            item_list = query.all()
+            item_list = self.session.scalars(query).all()
             return item_list
 
         finally:
@@ -204,19 +181,18 @@ class DataBaseController:
         op = operator_map[when]
 
         try:
-            table = Table("event", self.metadata, autoload_with=self.engine)
-
             if user.is_admin:
-                query = self.session.query(table).filter(
-                    op(table.c["event_date_start"], now)
-                )
+                query = select(Event).where(op(Event.event_date_start, now))
             else:
-                query = (
-                    self.session.query(table)
-                    .filter(op(table.c["event_date_start"], now))
-                    .filter(table.c["customer_representative_id"] == user.id)
+                query = select(Event).join(
+                    CustomerRepresentative,
+                    Event.customer_representative_id == CustomerRepresentative.id
+                ).where(
+                    op(Event.event_date_start, now),
+                    CustomerRepresentative.id == user.id
                 )
-            item_list = query.all()
+
+            item_list = self.session.scalars(query).all()
 
             return item_list
 
@@ -237,20 +213,17 @@ class DataBaseController:
         """
         table = Table(table_name, self.metadata, autoload_with=self.engine)
         if user.is_admin:
-            query = self.session.query(table).filter(
-                table.c[data_filter].ilike(f"%{value}%")
-            )
+            query = select(table).where(table.c[data_filter].ilike(f"%{value}%"))
         else:
-            query = (
-                self.session.query(table)
-                .filter(table.c[data_filter].ilike(f"%{value}%"))
-                .filter(table.c.customer_representative_id == user.id)
+            query = select(table).where(
+                table.c[data_filter].ilike(f"%{value}%"),
+                table.c['customer_representative_id'] == user.id
             )
 
-        dataset = query.all()
+        dataset = self.session.execute(query)
         self.session.close()
 
-        return dataset
+        return dataset.fetchall()
 
 
 class ModelsController:
@@ -343,7 +316,7 @@ class ModelsController:
         )
 
         customer = contract_infos["customer"]
-        customer_id = UUID(customer[0])
+        customer_id = customer.id
         customer_object = self.session.get(Customer, customer_id)
 
         contract = Contract(
@@ -375,7 +348,6 @@ class ModelsController:
         :param contract:
         :return: Event: The newly created Event's instance.
         """
-
         customer_id = contract.customer_id
         customer_representative_id = contract.customer_representative_id
         contract_id = contract.id
@@ -386,7 +358,8 @@ class ModelsController:
             .filter_by(id=customer_representative_id)
             .one()
         )
-        contract_instance = self.session.query(Contract).filter_by(id=contract_id).one()
+        result = self.session.execute(select(Contract).where(Contract.id == contract_id))
+        contract_instance = result.scalar_one_or_none()
 
         event_date_start = datetime.datetime.strptime(
             event_infos["event_date_start"], "%Y-%m-%d"
@@ -425,14 +398,14 @@ class ModelsController:
         :param customer_to_edit:
         """
         customer_editable_fields = {
-            "last_name": customer_to_edit[1],
-            "first_name": customer_to_edit[2],
-            "phone_number": customer_to_edit[3],
-            "company_name": customer_to_edit[4],
-            "email": customer_to_edit[8],
+            "last_name": customer_to_edit.last_name,
+            "first_name": customer_to_edit.first_name,
+            "phone_number": customer_to_edit.phone_number,
+            "company_name": customer_to_edit.company_name,
+            "email": customer_to_edit.email,
         }
 
-        customer_id = UUID(customer_to_edit[0])
+        customer_id = customer_to_edit.id
 
         customer = self.session.get(Customer, customer_id)
 
@@ -461,13 +434,13 @@ class ModelsController:
         :param contract_to_edit:
         """
         contract_editable_fields = {
-            "name": contract_to_edit[1],
-            "total_amount": contract_to_edit[2],
-            "amount_due": contract_to_edit[3],
-            "status": contract_to_edit[4],
+            "name": contract_to_edit.name,
+            "total_amount": contract_to_edit.total_amount,
+            "amount_due": contract_to_edit.amount_due,
+            "status": contract_to_edit.status,
         }
 
-        contract_id = UUID(contract_to_edit[0])
+        contract_id = contract_to_edit.id
 
         contract = self.session.get(Contract, contract_id)
 
@@ -494,15 +467,15 @@ class ModelsController:
         :param event_to_edit:
         """
         event_editables = {
-            "name": event_to_edit[0],
-            "event_date_start": event_to_edit[6],
-            "event_date_end": event_to_edit[7],
-            "location": event_to_edit[8],
-            "attendees": event_to_edit[9],
-            "notes": event_to_edit[10],
+            "name": event_to_edit.name,
+            "event_date_start": event_to_edit.event_date_start,
+            "event_date_end": event_to_edit.event_date_end,
+            "location": event_to_edit.location,
+            "attendees": event_to_edit.attendees,
+            "notes": event_to_edit.notes,
         }
 
-        event_id = UUID(event_to_edit[1])
+        event_id = event_to_edit.id
         event = self.session.get(Event, event_id)
 
         if not event:

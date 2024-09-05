@@ -7,7 +7,7 @@ import sentry_sdk
 from dotenv import load_dotenv
 
 from controller import DataBaseController, LoginController, ModelsController
-from models import CustomerRepresentative
+from models import CustomerRepresentative, Customer, Contract, Event
 from view import (ConsoleView, ContractMenuView, CustomerMenuView,
                   CustomerRepresentativeMenuView, EventMenuView, MainView)
 
@@ -53,19 +53,19 @@ class CustomerController:
         self.model_controller.create_customer(customer_infos, user)
 
     def edit_customer(self, user):
-        customer_list = self.database_controller.list_item("customer", user)
+        customer_list = self.database_controller.list_item(Customer, user)
         self.console_view.display_customer_list(customer_list)
         customer_to_edit = self.customer_menu_view.edit_customer(customer_list)
         self.model_controller.edit_customer(customer_to_edit)
 
     def delete_customer(self, user):
-        customer_list = self.database_controller.list_item("customer", user)
+        customer_list = self.database_controller.list_item(Customer, user)
         self.console_view.display_customer_list(customer_list)
         customer_to_delete_id = self.customer_menu_view.delete_customer(customer_list)
-        self.database_controller.delete_item("customer", customer_to_delete_id)
+        self.database_controller.delete_item(Customer, customer_to_delete_id)
 
     def list_customers(self, user):
-        customer_list = self.database_controller.list_item("customer", user)
+        customer_list = self.database_controller.list_item(Customer, user)
         self.console_view.display_customer_list(customer_list)
 
     def search_customer(self, user):
@@ -86,25 +86,25 @@ class ContractController:
         self.console_view = ConsoleView("Customer List")
 
     def create_new_contract(self, user):
-        customer_list = self.database_controller.list_item("customer", user)
+        customer_list = self.database_controller.list_item(Customer, user)
 
         contract_infos = self.contract_menu_view.create_contract(customer_list)
         self.model_controller.create_contract(contract_infos, user)
 
     def edit_contract(self, user):
-        contract_list = self.database_controller.list_item("contract", user)
+        contract_list = self.database_controller.list_item(Contract, user)
 
         contract_to_edit = self.contract_menu_view.edit_contract(contract_list)
         self.model_controller.edit_contract_object(contract_to_edit)
 
     def delete_contract(self, user):
-        contract_list = self.database_controller.list_item("contract", user)
+        contract_list = self.database_controller.list_item(Contract, user)
         self.console_view.display_contract_list(contract_list)
         contract_to_delete_id = self.contract_menu_view.delete_contract(contract_list)
-        self.database_controller.delete_item("contract", contract_to_delete_id)
+        self.database_controller.delete_item(Contract, contract_to_delete_id)
 
     def list_contracts(self, user):
-        contract_list = self.database_controller.list_item("contract", user)
+        contract_list = self.database_controller.list_item(Contract, user)
         self.console_view.display_contract_list(contract_list)
 
     def list_unpaid_contracts(self, user):
@@ -129,22 +129,22 @@ class EventController:
         self.console_view = ConsoleView("Event List")
 
     def create_event(self, user):
-        contract_list = self.database_controller.list_item("contract", user)
+        contract_list = self.database_controller.list_item(Contract, user)
         contract, event_infos = self.event_menu_view.create_event(contract_list)
         self.model_controller.create_event(event_infos, contract)
 
     def edit_event(self, user):
-        event_list = self.database_controller.list_item("event", user)
+        event_list = self.database_controller.list_item(Event, user)
         event_to_edit = self.event_menu_view.edit_event(event_list)
         self.model_controller.edit_event_object(event_to_edit)
 
     def delete_event(self, user):
-        event_list = self.database_controller.list_item("event", user)
+        event_list = self.database_controller.list_item(Event, user)
         event_to_delete_id = self.event_menu_view.delete_event(event_list)
-        self.database_controller.delete_item("event", event_to_delete_id)
+        self.database_controller.delete_item(Event, event_to_delete_id)
 
     def list_events(self, user):
-        event_list = self.database_controller.list_item("event", user)
+        event_list = self.database_controller.list_item(Event, user)
         self.console_view.display_event_list(event_list)
 
     def list_events_to_come(self, user):

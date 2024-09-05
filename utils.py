@@ -1,7 +1,12 @@
+import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Type
 
 import bcrypt
+import jwt
+
+from models import CustomerRepresentative
 
 
 def hash_password(password):
@@ -56,3 +61,26 @@ def validate_end_date(event_date_start, event_date_end):
         return end >= start
     except ValueError:
         return False
+
+
+def save_token_in_file(user: Type[CustomerRepresentative]):
+    """
+    Encodes and saves token in a file.
+    :user
+    :param user:
+    :return:
+    """
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+
+    expired_date = datetime.today() + timedelta(minutes=50)
+    encoded_jwt = jwt.encode(
+        {
+            "user_id": str(user.id),
+            "expired_date": expired_date.strftime("%m/%d/%Y, %H:%M:%S"),
+        },
+        JWT_SECRET_KEY,
+        algorithm="HS256",
+    )
+    f = open(".credentials", "w+")
+    f.write(encoded_jwt)
+    f.close()

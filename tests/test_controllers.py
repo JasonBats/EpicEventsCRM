@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from unittest.mock import patch
 
 from controller import DataBaseController, LoginController, ModelsController
 from models import Contract, Customer, CustomerRepresentative, Event
@@ -95,7 +94,7 @@ class TestDataBaseController:
         controller = DataBaseController()
         controller.session = session
 
-        item_list = controller.list_item("customer", new_customer_representative)
+        item_list = controller.list_item(Customer, new_customer_representative)
 
         assert item_list is not None
         assert item_list[0].email == new_customer.email
@@ -104,8 +103,10 @@ class TestDataBaseController:
         controller = DataBaseController()
         controller.session = session
 
+        new_customer_representative.is_admin = 1
+
         item_list = controller.list_item(
-            "customer_representative", new_customer_representative
+            CustomerRepresentative, new_customer_representative
         )
 
         assert item_list is not None
@@ -142,18 +143,18 @@ class TestModelsController:
             "password": "1234",
         }
 
-        with patch.object(session, "add") as mock_add, patch.object(
-            session, "commit"
-        ) as mock_commit:
-            created_customer_representative = controller.create_customer_representative(
-                customer_representative_infos
-            )
-            mock_add.assert_called_once()
-            assert isinstance(created_customer_representative, CustomerRepresentative)
-            mock_commit.assert_called_once()
-            mock_hash_password.assert_called_once_with("1234")
+        mock_add = mocker.patch.object(session, "add")
+        mock_commit = mocker.patch.object(session, "commit")
 
-    def test_create_customer(self, session, new_customer_representative):
+        created_customer_representative = controller.create_customer_representative(
+            customer_representative_infos
+        )
+        mock_add.assert_called_once()
+        assert isinstance(created_customer_representative, CustomerRepresentative)
+        mock_commit.assert_called_once()
+        mock_hash_password.assert_called_once_with("1234")
+
+    def test_create_customer(self, mocker, session, new_customer_representative):
 
         controller = ModelsController()
         controller.session = session
@@ -168,30 +169,20 @@ class TestModelsController:
 
         user = new_customer_representative
 
-        with patch.object(session, "add") as mock_add, patch.object(
-            session, "commit"
-        ) as mock_commit:
-            created_customer = controller.create_customer(customer_infos, user)
+        mock_add = mocker.patch.object(session, "add")
+        mock_commit = mocker.patch.object(session, "commit")
 
-            mock_add.assert_called_once()
-            assert isinstance(created_customer, Customer)
-            mock_commit.assert_called_once()
+        created_customer = controller.create_customer(customer_infos, user)
+
+        mock_add.assert_called_once()
+        assert isinstance(created_customer, Customer)
+        mock_commit.assert_called_once()
 
     def test_edit_customer(self, mocker, session, new_customer):
         controller = ModelsController()
         controller.session = session
 
-        customer_to_edit = (
-            str(new_customer.id),
-            new_customer.first_name,
-            new_customer.last_name,
-            new_customer.phone_number,
-            new_customer.company_name,
-            new_customer.date_created,
-            new_customer.date_modified,
-            new_customer.customer_representative_id,
-            new_customer.email,
-        )
+        customer_to_edit = new_customer
 
         mock_input_update_view = mocker.patch(
             "controller.MainView.input_update_view",
@@ -208,7 +199,7 @@ class TestModelsController:
         assert customer.last_name == "NewName"
         mock_input_update_view.assert_called()
 
-    def test_create_contract(self, session, new_customer_representative, new_customer):
+    def test_create_contract(self, mocker, session, new_customer_representative, new_customer):
         controller = ModelsController()
         controller.session = session
 
@@ -217,35 +208,24 @@ class TestModelsController:
             "total_amount": 750,
             "amount_due": 700,
             "status": "En cours",
-            "customer": [str(new_customer.id)],
+            "customer": new_customer,
         }
+
         user = new_customer_representative
 
-        with patch.object(session, "add") as mock_add, patch.object(
-            session, "commit"
-        ) as mock_commit:
-            created_contract = controller.create_contract(contract_infos, user)
+        mock_add = mocker.patch.object(session, "add")
+        mock_commit = mocker.patch.object(session, "commit")
+        created_contract = controller.create_contract(contract_infos, user)
 
-            mock_add.assert_called_once()
-            assert isinstance(created_contract, Contract)
-            mock_commit.assert_called_once()
+        mock_add.assert_called_once()
+        assert isinstance(created_contract, Contract)
+        mock_commit.assert_called_once()
 
     def test_edit_contract(self, mocker, session, new_contract):
         controller = ModelsController()
         controller.session = session
 
-        contract_to_edit = (
-            str(new_contract.id),
-            new_contract.name,
-            new_contract.total_amount,
-            new_contract.amount_due,
-            new_contract.status,
-            new_contract.customer_email,
-            new_contract.customer_id,
-            new_contract.customer_representative_id,
-            new_contract.customer_representative_email,
-            new_contract.date_created,
-        )
+        contract_to_edit = new_contract
 
         mock_input_update_view = mocker.patch(
             "controller.MainView.input_update_view",
@@ -261,7 +241,7 @@ class TestModelsController:
         assert contract.name == "NewContractName"
         mock_input_update_view.assert_called()
 
-    def test_create_event(self, session, new_contract):
+    def test_create_event(self, mocker, session, new_contract):
         controller = ModelsController()
         controller.session = session
 
@@ -274,33 +254,19 @@ class TestModelsController:
             "notes": "",
         }
 
-        with patch.object(session, "add") as mock_add, patch.object(
-            session, "commit"
-        ) as mock_commit:
-            event = controller.create_event(event_infos, new_contract)
+        mock_add = mocker.patch.object(session, "add")
+        mock_commit = mocker.patch.object(session, "commit")
+        event = controller.create_event(event_infos, new_contract)
 
-            mock_add.assert_called_once()
-            assert isinstance(event, Event)
-            mock_commit.assert_called_once()
+        mock_add.assert_called_once()
+        assert isinstance(event, Event)
+        mock_commit.assert_called_once()
 
     def test_edit_event(self, mocker, session, new_event):
         controller = ModelsController()
         controller.session = session
 
-        event_to_edit = (
-            new_event.name,
-            str(new_event.id),
-            new_event.customer_id,
-            new_event.customer_email,
-            new_event.customer_representative_id,
-            new_event.customer_representative_email,
-            new_event.event_date_start,
-            new_event.event_date_end,
-            new_event.location,
-            new_event.attendees,
-            new_event.notes,
-            new_event.contract_id,
-        )
+        event_to_edit = new_event
 
         mock_input_update_view = mocker.patch(
             "controller.MainView.input_update_view",

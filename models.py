@@ -130,5 +130,5 @@ class Event(Base):
         foreign_keys="[Event.customer_representative_id]",
     )
     contract: Mapped["Contract"] = relationship(
-        "Contract", back_populates="events", foreign_keys="[Event.contract_id]"
+        "Contract", back_populates="events", foreign_keys="[Event.contract_id]", lazy="subquery"
     )
