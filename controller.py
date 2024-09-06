@@ -1,14 +1,14 @@
 import datetime
-from typing import Type, Tuple, Optional
+from typing import Any, List, Optional, Sequence, Tuple, Type
 
 from dotenv import load_dotenv
-from sqlalchemy import MetaData, Table, create_engine, select
+from sqlalchemy import MetaData, Row, RowMapping, Table, create_engine, select
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import operators
 
 from models import Contract, Customer, CustomerRepresentative, Event
-from utils import hash_password, verify_password, save_token_in_file
+from utils import hash_password, save_token_in_file, verify_password
 from view import LoginView, MainView
 
 load_dotenv()
@@ -22,7 +22,7 @@ class LoginController:
         self.metadata = MetaData()
         self.session = self.Session()
 
-    def login(self) -> Tuple[bool, Optional[Type[CustomerRepresentative]]]:  # TODO : Généraliser ça
+    def login(self) -> Tuple[bool, Optional[Type[CustomerRepresentative]]]:
         """
         Authenticates a user by verifying their email and password, and
         generates a JWT token for session management.
@@ -39,8 +39,9 @@ class LoginController:
         login_view = LoginView()
         email, password = login_view.get_credentials()
         try:
-            user = self.session.query(CustomerRepresentative).filter_by(
-                email=email).one()
+            user = (
+                self.session.query(CustomerRepresentative).filter_by(email=email).one()
+            )
             password_verified = verify_password(password, user.password)
             save_token_in_file(user)
         except NoResultFound:
@@ -74,9 +75,11 @@ class DataBaseController:
         :param item_id
         """
         try:
-            item = self.session.execute(
-                select(table).where(table.id == item_id)
-            ).scalars().one_or_none()
+            item = (
+                self.session.execute(select(table).where(table.id == item_id))
+                .scalars()
+                .one_or_none()
+            )
             if item is None:
                 raise ValueError(
                     f"L'objet avec l'ID {item_id} n'existe pas dans la table {table}."
@@ -94,25 +97,7 @@ class DataBaseController:
         finally:
             self.session.close()
 
-    def _get_table_class(self, table_name):
-        """
-        Retrieves the SQLAlchemy model class associated with the specified
-        table name.
-
-        This method provides a mapping between table names and their
-        corresponding SQLAlchemy model classes. It returns the model class
-        for the given `table_name` from the `table_mapping` dictionary.
-        """
-        table_mapping = {
-            "customer": Customer,
-            "customer_representative": CustomerRepresentative,
-            "contract": Contract,
-            "event": Event,
-        }
-
-        return table_mapping.get(table_name)
-
-    def list_item(self, table_name, user):
+    def list_item(self, table_name, user) -> Sequence[Row[Any] | RowMapping | Any]:
         """
         Retrieves a list of items from the specified table based on user
         permissions.
@@ -144,7 +129,7 @@ class DataBaseController:
         finally:
             self.session.close()
 
-    def filter_unpaid_contracts(self, user):
+    def filter_unpaid_contracts(self, user) -> List[object]:
         """
         Retrieves a list of unpaid contracts based on the user's role and
         permissions.
@@ -168,7 +153,7 @@ class DataBaseController:
         finally:
             self.session.close()
 
-    def filter_events(self, when, user):
+    def filter_events(self, when, user) -> Sequence[Event]:
         """
         Retrieves a list of events based on the date and user's role and
         permissions.
@@ -186,12 +171,16 @@ class DataBaseController:
             if user.is_admin:
                 query = select(Event).where(op(Event.event_date_start, now))
             else:
-                query = select(Event).join(
-                    CustomerRepresentative,
-                    Event.customer_representative_id == CustomerRepresentative.id
-                ).where(
-                    op(Event.event_date_start, now),
-                    CustomerRepresentative.id == user.id
+                query = (
+                    select(Event)
+                    .join(
+                        CustomerRepresentative,
+                        Event.customer_representative_id == CustomerRepresentative.id,
+                    )
+                    .where(
+                        op(Event.event_date_start, now),
+                        CustomerRepresentative.id == user.id,
+                    )
                 )
 
             item_list = self.session.scalars(query).all()
@@ -201,7 +190,9 @@ class DataBaseController:
         finally:
             self.session.close()
 
-    def dynamic_search(self, table_name, data_filter, value, user):
+    def dynamic_search(
+        self, table_name, data_filter, value, user
+    ) -> Sequence[Row[tuple[Any, ...] | Any]]:
         """
         Performs a dynamic search on a specified table based on a filter and
         value, considering the user's role.
@@ -219,7 +210,7 @@ class DataBaseController:
         else:
             query = select(table).where(
                 table.c[data_filter].ilike(f"%{value}%"),
-                table.c['customer_representative_id'] == user.id
+                table.c["customer_representative_id"] == user.id,
             )
 
         dataset = self.session.execute(query)
@@ -234,7 +225,9 @@ class ModelsController:
         self.database_controller = DataBaseController()
         self.session = self.database_controller.session
 
-    def create_customer_representative(self, customer_representative_infos):
+    def create_customer_representative(
+        self, customer_representative_infos
+    ) -> CustomerRepresentative:
         """
         Creates and stores a new CustomerRepresentative in the database.
 
@@ -263,7 +256,7 @@ class ModelsController:
 
         return customer_representative
 
-    def create_customer(self, customer_infos, user):
+    def create_customer(self, customer_infos, user) -> Customer:
         """
         Creates and stores a new Customer in the database.
 
@@ -297,7 +290,7 @@ class ModelsController:
 
         return customer
 
-    def create_contract(self, contract_infos, user):
+    def create_contract(self, contract_infos, user) -> Contract:
         """
         Creates and stores a new Contract in the database.
 
@@ -338,7 +331,7 @@ class ModelsController:
 
         return contract
 
-    def create_event(self, event_infos, contract):
+    def create_event(self, event_infos, contract) -> Event:
         """
         Creates and stores a new Event in the database.
 
@@ -360,8 +353,8 @@ class ModelsController:
             .filter_by(id=customer_representative_id)
             .one()
         )
-        result = self.session.execute(select(Contract).where(
-            Contract.id == contract_id)
+        result = self.session.execute(
+            select(Contract).where(Contract.id == contract_id)
         )
         contract_instance = result.scalar_one_or_none()
 
@@ -391,7 +384,7 @@ class ModelsController:
 
         return event
 
-    def edit_customer(self, customer_to_edit):
+    def edit_customer(self, customer_to_edit) -> Type[Customer]:
         """
         Updates the details of an existing customer in the database.
 
@@ -427,7 +420,7 @@ class ModelsController:
 
         return customer
 
-    def edit_contract_object(self, contract_to_edit):
+    def edit_contract_object(self, contract_to_edit) -> Type[Contract]:
         """
         Updates the details of an existing contract in the database.
 
@@ -460,7 +453,7 @@ class ModelsController:
 
         return contract
 
-    def edit_event_object(self, event_to_edit):
+    def edit_event_object(self, event_to_edit) -> Type[Event]:
         """
         Updates the details of an existing event in the database.
 

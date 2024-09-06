@@ -3,10 +3,11 @@ from uuid import UUID, uuid1
 
 from sqlalchemy import (Boolean, Date, ForeignKey, Integer, LargeBinary,
                         Numeric, String)
-from sqlalchemy.orm import (Mapped, declarative_base, mapped_column,
-                            relationship)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class CustomerRepresentative(Base):
@@ -133,5 +134,5 @@ class Event(Base):
         "Contract",
         back_populates="events",
         foreign_keys="[Event.contract_id]",
-        lazy="subquery"
+        lazy="subquery",
     )

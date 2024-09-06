@@ -1,13 +1,12 @@
 import os
-from datetime import datetime
 from uuid import UUID
 
-import jwt
 import sentry_sdk
 from dotenv import load_dotenv
 
 from controller import DataBaseController, LoginController, ModelsController
-from models import CustomerRepresentative, Customer, Contract, Event
+from models import Contract, Customer, CustomerRepresentative, Event
+from utils import check_token_date
 from view import (ConsoleView, ContractMenuView, CustomerMenuView,
                   CustomerRepresentativeMenuView, EventMenuView, MainView)
 
@@ -31,7 +30,7 @@ class CustomerRepresentativeController:
         self.customer_representative_menu_view = CustomerRepresentativeMenuView()
         self.model_controller = ModelsController()
 
-    def create_new_customer_representative(self):
+    def create_new_customer_representative(self) -> None:
         customer_representative_infos = (
             self.customer_representative_menu_view.create_customer_representative()
         )
@@ -48,27 +47,27 @@ class CustomerController:
         self.model_controller = ModelsController()
         self.console_view = ConsoleView("Customer List")
 
-    def create_new_customer(self, user):
+    def create_new_customer(self, user) -> None:
         customer_infos = self.customer_menu_view.create_customer()
         self.model_controller.create_customer(customer_infos, user)
 
-    def edit_customer(self, user):
+    def edit_customer(self, user) -> None:
         customer_list = self.database_controller.list_item(Customer, user)
         self.console_view.display_customer_list(customer_list)
         customer_to_edit = self.customer_menu_view.edit_customer(customer_list)
         self.model_controller.edit_customer(customer_to_edit)
 
-    def delete_customer(self, user):
+    def delete_customer(self, user) -> None:
         customer_list = self.database_controller.list_item(Customer, user)
         self.console_view.display_customer_list(customer_list)
         customer_to_delete_id = self.customer_menu_view.delete_customer(customer_list)
         self.database_controller.delete_item(Customer, customer_to_delete_id)
 
-    def list_customers(self, user):
+    def list_customers(self, user) -> None:
         customer_list = self.database_controller.list_item(Customer, user)
         self.console_view.display_customer_list(customer_list)
 
-    def search_customer(self, user):
+    def search_customer(self, user) -> None:
         data_filter, value = self.customer_menu_view.customer_dynamic_search_menu()
         dataset = self.database_controller.dynamic_search(
             table_name="customer", data_filter=data_filter, value=value, user=user
@@ -85,33 +84,33 @@ class ContractController:
         self.model_controller = ModelsController()
         self.console_view = ConsoleView("Customer List")
 
-    def create_new_contract(self, user):
+    def create_new_contract(self, user) -> None:
         customer_list = self.database_controller.list_item(Customer, user)
 
         contract_infos = self.contract_menu_view.create_contract(customer_list)
         self.model_controller.create_contract(contract_infos, user)
 
-    def edit_contract(self, user):
+    def edit_contract(self, user) -> None:
         contract_list = self.database_controller.list_item(Contract, user)
 
         contract_to_edit = self.contract_menu_view.edit_contract(contract_list)
         self.model_controller.edit_contract_object(contract_to_edit)
 
-    def delete_contract(self, user):
+    def delete_contract(self, user) -> None:
         contract_list = self.database_controller.list_item(Contract, user)
         self.console_view.display_contract_list(contract_list)
         contract_to_delete_id = self.contract_menu_view.delete_contract(contract_list)
         self.database_controller.delete_item(Contract, contract_to_delete_id)
 
-    def list_contracts(self, user):
+    def list_contracts(self, user) -> None:
         contract_list = self.database_controller.list_item(Contract, user)
         self.console_view.display_contract_list(contract_list)
 
-    def list_unpaid_contracts(self, user):
+    def list_unpaid_contracts(self, user) -> None:
         filtered_contract_list = self.database_controller.filter_unpaid_contracts(user)
         self.console_view.display_contract_list(filtered_contract_list)
 
-    def search_contracts(self, user):
+    def search_contracts(self, user) -> None:
         data_filter, value = self.contract_menu_view.contract_dynamic_search_menu()
         dataset = self.database_controller.dynamic_search(
             table_name="contract", data_filter=data_filter, value=value, user=user
@@ -122,42 +121,42 @@ class ContractController:
 
 class EventController:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.database_controller = DataBaseController()
         self.event_menu_view = EventMenuView()
         self.model_controller = ModelsController()
         self.console_view = ConsoleView("Event List")
 
-    def create_event(self, user):
+    def create_event(self, user) -> None:
         contract_list = self.database_controller.list_item(Contract, user)
         contract, event_infos = self.event_menu_view.create_event(contract_list)
         self.model_controller.create_event(event_infos, contract)
 
-    def edit_event(self, user):
+    def edit_event(self, user) -> None:
         event_list = self.database_controller.list_item(Event, user)
         event_to_edit = self.event_menu_view.edit_event(event_list)
         self.model_controller.edit_event_object(event_to_edit)
 
-    def delete_event(self, user):
+    def delete_event(self, user) -> None:
         event_list = self.database_controller.list_item(Event, user)
         event_to_delete_id = self.event_menu_view.delete_event(event_list)
         self.database_controller.delete_item(Event, event_to_delete_id)
 
-    def list_events(self, user):
+    def list_events(self, user) -> None:
         event_list = self.database_controller.list_item(Event, user)
         self.console_view.display_event_list(event_list)
 
-    def list_events_to_come(self, user):
+    def list_events_to_come(self, user) -> None:
         filtered_events = self.database_controller.filter_events(">=", user)
         console_view = ConsoleView("Evenements à venir")
         console_view.display_event_list(filtered_events)
 
-    def list_past_events(self, user):
+    def list_past_events(self, user) -> None:
         filtered_events = self.database_controller.filter_events("<=", user)
         console_view = ConsoleView("Evenements passés")
         console_view.display_event_list(filtered_events)
 
-    def search_events(self, user):
+    def search_events(self, user) -> None:
         data_filter, value = self.event_menu_view.event_dynamic_search_menu()
         dataset = self.database_controller.dynamic_search(
             table_name="event", data_filter=data_filter, value=value, user=user
@@ -173,7 +172,7 @@ class MainController:
     def __init__(self):
         self.main_view = MainView()
         self.login_controller = LoginController()
-        self.decoded_token = self.check_token_date()
+        self.decoded_token = check_token_date()
         if not self.decoded_token:
             retries = 3
             while self.logged is False and retries:
@@ -184,24 +183,11 @@ class MainController:
             self.logged = True
             self.user = (
                 self.login_controller.session.query(CustomerRepresentative)
-                .filter_by(id=UUID(self.decoded_token["user_id"])).one()
+                .filter_by(id=UUID(self.decoded_token["user_id"]))
+                .one()
             )
 
-    def check_token_date(self):
-        if not os.path.isfile(".credentials"):
-            return False
-
-        f = open(".credentials", "r")
-        encoded_token = f.read()
-        decoded_token = jwt.decode(encoded_token, JWT_SECRET_KEY, algorithms=["HS256"])
-        if datetime.now() < datetime.strptime(
-            decoded_token["expired_date"], "%m/%d/%Y, %H:%M:%S"
-        ):
-            return decoded_token
-        else:
-            return False
-
-    def run(self):
+    def run(self) -> None:
         if self.logged:
             while True:
                 try:
@@ -228,14 +214,14 @@ class MainController:
                 except IndexError:
                     print("Ce choix ne correspond à aucune option.")
 
-    def logout(self, user):
+    def logout(self, user) -> None:
         print("Déconnexion réussie.")
         self.decoded_token = None
         self.logged = False
         return self.decoded_token
 
 
-def create_client_menu_handler(user):
+def create_client_menu_handler(user) -> None:
 
     client_menu = MainView.client_menu()
     customer_controller = CustomerController()
@@ -251,7 +237,7 @@ def create_client_menu_handler(user):
     customer_functions[client_menu](user)
 
 
-def create_contract_menu_handler(user):
+def create_contract_menu_handler(user) -> None:
 
     contract_menu = MainView.contract_menu()
     contract_controller = ContractController()
@@ -268,7 +254,7 @@ def create_contract_menu_handler(user):
     contract_functions[contract_menu](user)
 
 
-def create_event_menu_handler(user):
+def create_event_menu_handler(user) -> None:
 
     event_menu = MainView.event_menu()
     event_controller = EventController()
@@ -286,7 +272,7 @@ def create_event_menu_handler(user):
     event_functions[event_menu](user)
 
 
-def creatve_cr_menu_handler(user):
+def creatve_cr_menu_handler(user) -> None:
 
     if user.is_admin == 1:
 

@@ -1,7 +1,7 @@
 import os
 import re
 from datetime import datetime, timedelta
-from typing import Type
+from typing import Any, Type
 
 import bcrypt
 import jwt
@@ -63,7 +63,7 @@ def validate_end_date(event_date_start, event_date_end):
         return False
 
 
-def save_token_in_file(user: Type[CustomerRepresentative]):
+def save_token_in_file(user: Type[CustomerRepresentative]) -> None:
     """
     Encodes and saves token in a file.
     :user
@@ -72,7 +72,10 @@ def save_token_in_file(user: Type[CustomerRepresentative]):
     """
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
-    expired_date = datetime.today() + timedelta(minutes=50)
+    if JWT_SECRET_KEY is None:
+        raise ValueError("JWT_SECRET_KEY environment variabvle is not set")
+
+    expired_date = datetime.today() + timedelta(minutes=5)
     encoded_jwt = jwt.encode(
         {
             "user_id": str(user.id),
@@ -84,3 +87,24 @@ def save_token_in_file(user: Type[CustomerRepresentative]):
     f = open(".credentials", "w+")
     f.write(encoded_jwt)
     f.close()
+
+
+def check_token_date() -> bool | Any:
+
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+
+    if JWT_SECRET_KEY is None:
+        raise ValueError("JWT_SECRET_KEY environment variabvle is not set")
+
+    if not os.path.isfile(".credentials"):
+        return False
+
+    f = open(".credentials", "r")
+    encoded_token = f.read()
+    decoded_token = jwt.decode(encoded_token, JWT_SECRET_KEY, algorithms=["HS256"])
+    if datetime.now() < datetime.strptime(
+        decoded_token["expired_date"], "%m/%d/%Y, %H:%M:%S"
+    ):
+        return decoded_token
+    else:
+        return False

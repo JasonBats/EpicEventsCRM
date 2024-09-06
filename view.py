@@ -1,13 +1,16 @@
+from typing import Any, Tuple, Type
+
 from rich.console import Console
 from rich.table import Table
 
+from models import Contract, Customer, Event
 from utils import (validate_amount_due, validate_date, validate_email,
                    validate_end_date, validate_phone_number,
                    validate_total_amount)
 
 
 class LoginView:
-    def get_credentials(self):
+    def get_credentials(self) -> Tuple[str, str]:
         user = input("Login :")
         password = input("Password :")
 
@@ -17,7 +20,7 @@ class LoginView:
 class MainView:
 
     @staticmethod
-    def main_menu():
+    def main_menu() -> int:
         main_choice = int(
             input(
                 "Quel menu ouvrir ?\n"
@@ -32,7 +35,7 @@ class MainView:
         return main_choice
 
     @staticmethod
-    def client_menu():
+    def client_menu() -> int:
         client_menu_choice = int(
             input(
                 "-- CLIENTS --\n"
@@ -68,7 +71,7 @@ class MainView:
         return contract_menu_choice
 
     @staticmethod
-    def event_menu():
+    def event_menu() -> int:
         event_menu_choice = int(
             input(
                 "-- ÉVÈNEMENTS --\n"
@@ -88,7 +91,7 @@ class MainView:
         return event_menu_choice
 
     @staticmethod
-    def customer_representative_menu():
+    def customer_representative_menu() -> int:
         customer_representative_menu_choice = int(
             input("\n[1] - Ajouter un nouveau commercial\n")
         )
@@ -96,19 +99,19 @@ class MainView:
         return customer_representative_menu_choice
 
     @staticmethod
-    def input_update_view(obj, key):
+    def input_update_view(obj, key) -> str:
 
         new_value = input(f"{key} [{getattr(obj, key)}] : \n")
 
         return new_value
 
-    def login_error(self, retries):
+    def login_error(self, retries) -> None:
         print(f"Entrez vos identifiants. [{retries}] essais restants.")
 
 
 class CustomerRepresentativeMenuView:
 
-    def create_customer_representative(self):
+    def create_customer_representative(self) -> dict[str, str | int]:
         last_name = input("Nom ?\n")
         first_name = input("Prenom ?\n")
         email = input("Email ?\n")
@@ -130,7 +133,7 @@ class CustomerRepresentativeMenuView:
 
 class CustomerMenuView:
 
-    def create_customer(self):
+    def create_customer(self) -> dict[str, str | int]:
         last_name = input("Nom du client ?\n")
         first_name = input("Prenom du client ?\n")
         email = input("Email du client ?\n")
@@ -149,14 +152,14 @@ class CustomerMenuView:
             "company_name": company_name,
         }
 
-    def edit_customer(self, customer_list):
+    def edit_customer(self, customer_list) -> Type[Customer]:
 
         which_one = int(input("Quel client souhaitez-vous modifier ?\n"))
         customer_to_edit = customer_list[which_one]
 
         return customer_to_edit
 
-    def delete_customer(self, customer_list):
+    def delete_customer(self, customer_list) -> str:
 
         which_one = int(input("Quel client souhaitez-vous supprimer ?\n"))
         customer_to_delete = customer_list[which_one]
@@ -164,7 +167,7 @@ class CustomerMenuView:
 
         return customer_id
 
-    def customer_dynamic_search_menu(self):
+    def customer_dynamic_search_menu(self) -> Tuple[str, str]:
         filter_type = {
             1: "first_name",
             2: "last_name",
@@ -191,7 +194,7 @@ class CustomerMenuView:
 
 class ContractMenuView:
 
-    def create_contract(self, customer_list):
+    def create_contract(self, customer_list) -> dict[str, str | int]:
         name = input("Nom du contrat ?\n")
         total_amount = input("Montant du contrat ?\n")
         while not validate_total_amount(total_amount):
@@ -219,7 +222,7 @@ class ContractMenuView:
             "customer": customer,
         }
 
-    def edit_contract(self, contract_list):
+    def edit_contract(self, contract_list) -> Type[Contract]:
 
         console_view = ConsoleView("Contract List")
         console_view.display_contract_list(contract_list)
@@ -229,7 +232,7 @@ class ContractMenuView:
 
         return contract_to_edit
 
-    def delete_contract(self, contract_list):
+    def delete_contract(self, contract_list) -> str:
 
         which_one = int(input("Quel contrat souhaitez-vous supprimer ?\n"))
         contract_to_delete = contract_list[which_one]
@@ -237,7 +240,7 @@ class ContractMenuView:
 
         return contract_id
 
-    def contract_dynamic_search_menu(self):
+    def contract_dynamic_search_menu(self) -> Tuple[str, str]:
         filter_type = {
             1: "name",
             2: "status",
@@ -262,7 +265,8 @@ class ContractMenuView:
 
 class EventMenuView:
 
-    def create_event(self, contract_list):
+    def create_event(self,
+                     contract_list) -> Tuple[Any, dict[str, object]]:
         print(f"Contract list 6874684: {contract_list}")
         console_view = ConsoleView("Contracts")
         console_view.display_contract_list(contract_list)
@@ -303,7 +307,7 @@ class EventMenuView:
 
         return contract, event_infos
 
-    def edit_event(self, event_list):
+    def edit_event(self, event_list) -> Type[Event]:
 
         console_view = ConsoleView("Event List")
         console_view.display_event_list(event_list)
@@ -313,7 +317,7 @@ class EventMenuView:
 
         return event_to_edit
 
-    def delete_event(self, event_list):
+    def delete_event(self, event_list) -> str:
         console_view = ConsoleView("Event List")
         console_view.display_event_list(event_list)
 
@@ -323,9 +327,14 @@ class EventMenuView:
 
         return event_id
 
-    def event_dynamic_search_menu(self):
+    def event_dynamic_search_menu(self) -> Tuple[str, str]:
 
-        filter_type = {1: "name", 2: "customer_email", 3: "location", 4: "notes"}
+        filter_type = {
+            1: "name",
+            2: "customer_email",
+            3: "location",
+            4: "notes"
+        }
 
         x = int(
             input(
@@ -352,7 +361,7 @@ class ConsoleView:
         )
         self.console = Console(width=200)
 
-    def display_event_list(self, event_list):
+    def display_event_list(self, event_list) -> None:
 
         columns = [
             "n°",
@@ -375,7 +384,7 @@ class ConsoleView:
 
         self.console.print(self.table)
 
-    def display_customer_list(self, customer_list):
+    def display_customer_list(self, customer_list) -> None:
 
         columns = [
             "n°",
@@ -397,9 +406,16 @@ class ConsoleView:
 
         self.console.print(self.table)
 
-    def display_customer_representative_list(self, cr_list):
+    def display_customer_representative_list(self, cr_list) -> None:
 
-        columns = ["n°", "id", "last_name", "first_name", "email", "phone_number"]
+        columns = [
+            "n°",
+            "id",
+            "last_name",
+            "first_name",
+            "email",
+            "phone_number"
+        ]
 
         for column in columns:
             self.table.add_column(column)
@@ -408,7 +424,7 @@ class ConsoleView:
 
         self.console.print(self.table)
 
-    def display_contract_list(self, contract_list):
+    def display_contract_list(self, contract_list) -> None:
 
         columns = [
             "n°",
@@ -429,7 +445,7 @@ class ConsoleView:
 
         self.console.print(self.table)
 
-    def prepare_rows_for_table(self, item_list, columns):
+    def prepare_rows_for_table(self, item_list, columns) -> None:
         for i, item in enumerate(item_list):
             row = [str(i)]
             row.extend(

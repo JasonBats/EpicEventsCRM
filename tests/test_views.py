@@ -1,9 +1,5 @@
-from view import (
-    CustomerRepresentativeMenuView,
-    CustomerMenuView,
-    ContractMenuView,
-    EventMenuView, ConsoleView, LoginView,
-)
+from view import (ConsoleView, ContractMenuView, CustomerMenuView,
+                  CustomerRepresentativeMenuView, EventMenuView, LoginView)
 
 
 class TestLoginView:
@@ -11,8 +7,7 @@ class TestLoginView:
     def test_get_credentials(self, mocker):
         view = LoginView()
 
-        mocker.patch("builtins.input",
-                     side_effect=["login", "password"])
+        mocker.patch("builtins.input", side_effect=["login", "password"])
 
         user, password = view.get_credentials()
 
@@ -158,9 +153,9 @@ class TestConsoleView:
         assert new_event.name in captured.out
         assert new_event.customer_email in captured.out
 
-    def test_display_customer_representative_list(self,
-                                                  capsys,
-                                                  new_customer_representative):
+    def test_display_customer_representative_list(
+        self, capsys, new_customer_representative
+    ):
         view = ConsoleView("Customer Representatives")
 
         cr_list = [new_customer_representative]

@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from models import Base, CustomerRepresentative, Customer, Contract, Event
+from models import Base, Contract, Customer, CustomerRepresentative, Event
 
 
 @pytest.fixture
